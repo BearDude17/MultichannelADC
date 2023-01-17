@@ -6,7 +6,7 @@ import numpy as np
 class Device:
 
     COM_CODES = {
-        "START": b"1",
+        "START": b"0",
         "TIMEBASE": {
             "20 us": b"\x21",
             "50 us": b"\x22",
@@ -95,8 +95,18 @@ class Device:
     def fnc(self, in_buff, idx):
         return in_buff[idx], in_buff[idx + 1]
 
+    def acquire_single(self, ch):
+        self.serial_port.write(str(ch).encode())
+        data = self.serial_port.read(2)
+        lb = data[0]
+        hb = data[1]
+        hb = hb << 8
 
-    def acquire_single(self):
+        res = float((hb | lb) * 3300 / 4095)
+        print(res)
+        return res
+
+    def acquire_single1(self):
         self.serial_port.write(self.COM_CODES["START"])
         data = self.serial_port.read(size=self.BUFFER_SIZE*2)
         var3 = []

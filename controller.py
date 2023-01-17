@@ -16,7 +16,7 @@ class Controller:
         # gui
         self.app = QApplication([])
         self.main_window = MainWindow(controller=self)
-
+        self.eee = 1
         # device
         self.device = Device()
         self.fast_fure = Spectr()
@@ -26,7 +26,7 @@ class Controller:
 
         # fps stats
         self.fps_timer = QTimer()
-        self.fps_timer.timeout.connect(self.update_ui_fps)
+        #self.fps_timer.timeout.connect(self.update_ui_fps)
         self.spf = 1  # seconds per frame
         self.timestamp_last_capture = 0
 
@@ -45,9 +45,10 @@ class Controller:
         self.acquisition_worker.data_ready.connect(self.data_ready_callback)
         #self.acquisition_worker.data_ready_spectr.connect(self.data_spectr_ready_callback)
         self.acquisition_thread.start()
-
+        self.data_time_array = (np.arange(0, 1000) * 1000)
+        self.dataggg = np.arange(0, 10000)
         # default timebase
-        self.set_timebase("20 ms")
+        #self.set_timebase("20 ms")
 
         # on app exit
         self.app.aboutToQuit.connect(self.on_app_exit)
@@ -173,15 +174,14 @@ class Controller:
         self.continuous_acquisition = False
         self.fps_timer.stop()
 
+
     def data_ready_callback(self):
         if self.device.is_connected():
             curr_time = time.time()
-            self.spf = 0.9 * (curr_time - self.timestamp_last_capture) + 0.1 * self.spf
-            self.timestamp_last_capture = curr_time
-            self.main_window.CHANNEL0.update_ch(
-                self.data_time_array, self.acquisition_worker.data
-            )
-
+            #self.spf = 0.9 * (curr_time - self.timestamp_last_capture) + 0.1 * self.spf
+            #self.timestamp_last_capture = curr_time
+            self.main_window.CHANNEL0.update_ch(self.data_time_array, self.dataggg)
+            self.eee += 1
             time.sleep(0.01)
             if self.continuous_acquisition == True:
                 self.worker_wait_condition.notify_one()
@@ -214,7 +214,7 @@ class AcquisitionWorker(QObject):
             self.wait_condition.wait(self.mutex)
             self.mutex.unlock()
 
-            self.data = self.device.acquire_single()
+            self.data = self.device.acquire_single(0)
             self.data_ready.emit()
 
         self.finished.emit()
