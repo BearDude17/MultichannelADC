@@ -42,7 +42,7 @@ class OscilloscopeScreen(pg.PlotWidget):
         self.pen_ch1 = pg.mkPen(color="r", width=1)
 
         self.plot_ch([0, 0], [0, 0])
-
+    
     def plot_ch(self, x, y, ch=1):
         self.data_line_ch = self.plot(x, y, pen=self.pen_ch1)
 
@@ -126,12 +126,12 @@ class SampleBox(QGroupBox):
         layout = QVBoxLayout()
         self.setLayout(layout)
         self.timebase_options = [
+            "0.01",
             "0.05",
             "0.10",
             "0.20",
             "0.50",
             "1.0",
-            "2.0",
 
         ]
         self.combobox_timebase = QComboBox()
@@ -142,20 +142,53 @@ class SampleBox(QGroupBox):
         layout.addWidget(self.combobox_timebase)
         self.combobox_timebase.currentTextChanged.connect(self.set_sample_rate)
 
+        self.wiget = QWidget()
+        self.clearGraph = QPushButton(self.wiget)
+        self.clearGraph.setText("Clear Graph")
+        self.clearGraph.move(64,32)
+        self.clearGraph.clicked.connect(self.controller.clearAllGraph)
+
+        layout.addWidget(self.clearGraph)
+
+
+
+
     def set_sample_rate(self):
         timebase = self.combobox_timebase.currentText()
         if timebase == self.timebase_options[0]:
-            self.controller.change_sample_time(50)
+            self.controller.channel0.change_sample_time(10)
+            self.controller.channel1.change_sample_time(10)
+            self.controller.channel2.change_sample_time(10)
+            self.controller.channel3.change_sample_time(10)
+
         if timebase == self.timebase_options[1]:
-            self.controller.change_sample_time(100)
+            self.controller.channel0.change_sample_time(50)
+            self.controller.channel1.change_sample_time(50)
+            self.controller.channel2.change_sample_time(50)
+            self.controller.channel3.change_sample_time(50)
+
         if timebase == self.timebase_options[2]:
-            self.controller.change_sample_time(200)
+            self.controller.channel0.change_sample_time(100)
+            self.controller.channel1.change_sample_time(100)
+            self.controller.channel2.change_sample_time(100)
+            self.controller.channel3.change_sample_time(100)
         if timebase == self.timebase_options[3]:
-            self.controller.change_sample_time(500)
+            self.controller.channel0.change_sample_time(200)
+            self.controller.channel1.change_sample_time(200)
+            self.controller.channel2.change_sample_time(200)
+            self.controller.channel3.change_sample_time(200)
         if timebase == self.timebase_options[4]:
-            self.controller.change_sample_time(1000)
+            self.controller.channel0.change_sample_time(500)
+            self.controller.channel1.change_sample_time(500)
+            self.controller.channel2.change_sample_time(500)
+            self.controller.channel3.change_sample_time(500)
         if timebase == self.timebase_options[5]:
-            self.controller.change_sample_time(2000)
+            self.controller.channel0.change_sample_time(1000)
+            self.controller.channel1.change_sample_time(1000)
+            self.controller.channel2.change_sample_time(1000)
+            self.controller.channel3.change_sample_time(1000)
+
+        
 
 
 

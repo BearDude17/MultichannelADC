@@ -9,6 +9,52 @@ from serial.tools import list_ports
 import time
 import numpy as np
 
+
+class ChannelADC:
+    def __init__(self, device, channel, timestamp, ptrPlott):
+        self.device = device
+        self.chChannel = channel
+        self.chTimestamp = timestamp
+        self.ptrPlot = ptrPlott
+
+        self.dataTimeArray = []
+        self.dataArray = []
+
+        self.time = 0
+        self.iteratorTime = 0.1
+
+
+        self.timer=QTimer()
+        self.timer.timeout.connect(self.get_data)
+        self.timer.start(100)
+
+
+    def get_data(self):
+        if self.device.is_connected():
+
+            self.data = self.device.acquire_single(self.chChannel)
+
+            self.dataTimeArray = np.append(self.dataTimeArray, self.time)
+            self.dataArray = np.append(self.dataArray, self.data)
+
+            self.time = self.time + self.iteratorTime
+            
+
+            self.ptrPlot.update_ch(self.dataTimeArray, self.dataArray)
+        else:
+            print("not connected")
+
+    def change_sample_time(self, time):
+        self.timer.stop()
+        self.timer.start(time)
+        self.iteratorTime = time / 100
+
+    def clearData(self):
+        self.dataArray = np.delete(self.dataArray, self.dataArray.size - 1, axis = None)
+        self.dataTimeArray = np.delete(self.dataTimeArray, self.dataTimeArray - 1, axis = None)
+        self.time = 0
+
+
 class Controller:
     def __init__(self):
 
@@ -36,12 +82,18 @@ class Controller:
             self.worker_wait_condition, device=self.device
         )
 
-        self.timer=QTimer()
-        self.timer.timeout.connect(self.ii)
-        self.timer.start(1000)
+        #self.timer=QTimer()
+        #self.timer.timeout.connect(self.ii)
+        #self.timer.start(100)
 
 
-        self.data = []
+        #self.data = []
+        self.channel0 = ChannelADC(self.device, 0, 0.1, self.main_window.CHANNEL0)
+        self.channel1 = ChannelADC(self.device, 1, 0.1, self.main_window.CHANNEL1)
+        self.channel2 = ChannelADC(self.device, 2, 0.1, self.main_window.CHANNEL2)
+        self.channel3 = ChannelADC(self.device, 3, 0.1, self.main_window.CHANNEL3)
+
+
 
 
 
@@ -66,14 +118,23 @@ class Controller:
         # on app exit
         self.app.aboutToQuit.connect(self.on_app_exit)
 
+    def clearAllGraph(self):
+        self.channel0.clearData()
+        self.channel1.clearData()
+        self.channel2.clearData()
+        self.channel3.clearData()
+
+
     def ii(self):
         self.data = self.device.acquire_single(0)
+        self.data_time_array = np.append(self.data_time_array, self.eee)
+        self.dataggg = np.append(self.dataggg, self.data)
+        self.eee = self.eee + 0.01
+
         self.data_ready_callback()
         #print(self.data)
 
-    def change_sample_time(self, time):
-        self.timer.stop()
-        self.timer.start(time)
+
 
 
 
@@ -197,12 +258,9 @@ class Controller:
     def data_ready_callback(self):
         if self.device.is_connected():
 
-            self.data_time_array = np.append(self.data_time_array, self.eee)
-            self.dataggg = np.append(self.dataggg, self.data)
 
 
             #print(self.dataggg, self.data_time_array)
-            self.eee = self.eee + 0.1
 
             self.main_window.CHANNEL0.update_ch(self.data_time_array, self.dataggg)
 
