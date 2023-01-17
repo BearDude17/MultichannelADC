@@ -30,7 +30,13 @@ class OscilloscopeScreen(pg.PlotWidget):
         self.setLabel("bottom", "s", **styles)
 
         self.showGrid(x=True, y=True)
-        self.setXRange(0, 0, padding=0.02)
+        
+
+        self.enableAutoRange(axis='x')
+
+
+
+        #self.setXRange(0, 0, padding=0.02)
         self.setYRange(0, 3300, padding=0.02)
 
         self.pen_ch1 = pg.mkPen(color="r", width=1)
@@ -120,14 +126,13 @@ class SampleBox(QGroupBox):
         layout = QVBoxLayout()
         self.setLayout(layout)
         self.timebase_options = [
-            "0.20 [50/sec]",
-            "0.50 [20/sec]",
-            "0.100 [10/sec]",
-            "0.200 [5/sec]",
-            "0.500 [2/sec]",
-            "1.0 [1/sec]",
-            "2.0 [0.5/sec]",
-            "5.0 [0.2/sec]",
+            "0.05",
+            "0.10",
+            "0.20",
+            "0.50",
+            "1.0",
+            "2.0",
+
         ]
         self.combobox_timebase = QComboBox()
         self.combobox_timebase.addItems(self.timebase_options)
@@ -139,7 +144,19 @@ class SampleBox(QGroupBox):
 
     def set_sample_rate(self):
         timebase = self.combobox_timebase.currentText()
-        self.controller.set_sample_rate(timebase)
+        if timebase == self.timebase_options[0]:
+            self.controller.change_sample_time(50)
+        if timebase == self.timebase_options[1]:
+            self.controller.change_sample_time(100)
+        if timebase == self.timebase_options[2]:
+            self.controller.change_sample_time(200)
+        if timebase == self.timebase_options[3]:
+            self.controller.change_sample_time(500)
+        if timebase == self.timebase_options[4]:
+            self.controller.change_sample_time(1000)
+        if timebase == self.timebase_options[5]:
+            self.controller.change_sample_time(2000)
+
 
 
 class TriggerBox(QGroupBox):
@@ -392,11 +409,11 @@ class MainWindow(QMainWindow):
         self.LEFT_CHANNEL.addWidget(self.CHANNEL3)
         self.LEFT_CHANNEL.addWidget(self.CHANNEL4)
 
-        self.RIGHT_CHANNEL.addWidget(self.CHANNEL5)
-        self.RIGHT_CHANNEL.addWidget(self.CHANNEL6)
-        self.RIGHT_CHANNEL.addWidget(self.CHANNEL7)
-        self.RIGHT_CHANNEL.addWidget(self.CHANNEL8)
-        self.RIGHT_CHANNEL.addWidget(self.CHANNEL9)
+        #self.RIGHT_CHANNEL.addWidget(self.CHANNEL5)
+        #self.RIGHT_CHANNEL.addWidget(self.CHANNEL6)
+        #self.RIGHT_CHANNEL.addWidget(self.CHANNEL7)
+        #self.RIGHT_CHANNEL.addWidget(self.CHANNEL8)
+        #self.RIGHT_CHANNEL.addWidget(self.CHANNEL9)
 
 
         #self.screen_layoute.addStretch()

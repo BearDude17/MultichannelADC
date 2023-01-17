@@ -103,7 +103,8 @@ class Device:
         hb = hb << 8
 
         res = float((hb | lb) * 3300 / 4095)
-        print(res)
+        res = round(res, 2)
+        #print(res)
         return res
 
     def acquire_single1(self):

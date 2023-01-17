@@ -1,4 +1,4 @@
-from PySide6.QtCore import QMutex, QObject, QThread, QTimer, QWaitCondition, Signal
+from PySide6.QtCore import QMutex, QObject, QThread,QEventLoop, QTimer, QWaitCondition, Signal
 from PySide6.QtWidgets import QApplication, QMessageBox
 import serial.tools.list_ports
 from main_window import MainWindow
@@ -9,14 +9,13 @@ from serial.tools import list_ports
 import time
 import numpy as np
 
-
 class Controller:
     def __init__(self):
 
         # gui
         self.app = QApplication([])
         self.main_window = MainWindow(controller=self)
-        self.eee = 1
+        self.eee = 0
         # device
         self.device = Device()
         self.fast_fure = Spectr()
@@ -36,22 +35,47 @@ class Controller:
         self.acquisition_worker = AcquisitionWorker(
             self.worker_wait_condition, device=self.device
         )
-        self.acquisition_thread = QThread()
-        self.acquisition_worker.moveToThread(self.acquisition_thread)
-        self.acquisition_thread.started.connect(self.acquisition_worker.run)
-        self.acquisition_worker.finished.connect(self.acquisition_thread.quit)
-        # self.acquisition_worker.finished.connect(self.acquisition_thread.deleteLater)
-        # self.acquisition_thread.finished.connect(self.acquisition_worker.deleteLater)
-        self.acquisition_worker.data_ready.connect(self.data_ready_callback)
-        #self.acquisition_worker.data_ready_spectr.connect(self.data_spectr_ready_callback)
-        self.acquisition_thread.start()
-        self.data_time_array = (np.arange(0, 1000) * 1000)
-        self.dataggg = np.arange(0, 10000)
+
+        self.timer=QTimer()
+        self.timer.timeout.connect(self.ii)
+        self.timer.start(1000)
+
+
+        self.data = []
+
+
+
+        #self.acquisition_thread = QThread()
+        #self.acquisition_worker.moveToThread(self.acquisition_thread)
+        #self.acquisition_thread.started.connect(self.acquisition_worker.run)
+        #self.acquisition_worker.finished.connect(self.acquisition_thread.quit)
+        #self.acquisition_worker.data_ready.connect(self.data_ready_callback)
+        
+
+
+        #ce = DataCaptureThread(self.acquisition_worker)
+        #ce.run()
+        #self.acquisition_thread.start()
+        
+        
+        self.data_time_array = np.array([])
+        self.dataggg = np.array([])
         # default timebase
         #self.set_timebase("20 ms")
 
         # on app exit
         self.app.aboutToQuit.connect(self.on_app_exit)
+
+    def ii(self):
+        self.data = self.device.acquire_single(0)
+        self.data_ready_callback()
+        #print(self.data)
+
+    def change_sample_time(self, time):
+        self.timer.stop()
+        self.timer.start(time)
+
+
 
     def getport(self):
         VID = 0x0483 #1155
@@ -79,7 +103,6 @@ class Controller:
         self.main_window.control_panel.stats_panel.fps_label.setText(f"{fps:.2f} fps")
         self.main_window.control_panel.delta_herz_label.dlta_label.setText(f"{self.ref - self.het} Hz")
 
-
     def set_timebase(self, timebase: str):
         # send timebase to device
         self.device.timebase = timebase
@@ -94,10 +117,6 @@ class Controller:
         self.data_time_array = (
             np.arange(0, self.device.BUFFER_SIZE) * seconds_per_sample
         )
-        #self.main_window.CHANNEL0.setXRange(
-        #    0, self.device.BUFFER_SIZE * seconds_per_sample, padding=0.02
-        #)
-        #self.main_window.CHANNEL0.setYRange(0, 3.3)
 
     def set_sample_rate(self, sample_list:str):
         self.device.samplerates = sample_list
@@ -177,12 +196,17 @@ class Controller:
 
     def data_ready_callback(self):
         if self.device.is_connected():
-            curr_time = time.time()
-            #self.spf = 0.9 * (curr_time - self.timestamp_last_capture) + 0.1 * self.spf
-            #self.timestamp_last_capture = curr_time
+
+            self.data_time_array = np.append(self.data_time_array, self.eee)
+            self.dataggg = np.append(self.dataggg, self.data)
+
+
+            #print(self.dataggg, self.data_time_array)
+            self.eee = self.eee + 0.1
+
             self.main_window.CHANNEL0.update_ch(self.data_time_array, self.dataggg)
-            self.eee += 1
-            time.sleep(0.01)
+
+            #time.sleep(0.01)
             if self.continuous_acquisition == True:
                 self.worker_wait_condition.notify_one()
             else:
@@ -194,6 +218,7 @@ class Controller:
 
     def on_app_exit(self):
         print("exiting")
+
 
 
 class AcquisitionWorker(QObject):
@@ -213,8 +238,10 @@ class AcquisitionWorker(QObject):
             self.mutex.lock()
             self.wait_condition.wait(self.mutex)
             self.mutex.unlock()
-
+            #self.datas = self.device.acquire_single(0)
             self.data = self.device.acquire_single(0)
+
+
             self.data_ready.emit()
 
         self.finished.emit()
